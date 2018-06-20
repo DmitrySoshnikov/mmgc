@@ -5,8 +5,8 @@
 
 #pragma once
 
-#include <cstddef>
 #include <stdint.h>
+#include <cstddef>
 
 /**
  * Value types.
@@ -87,6 +87,11 @@ class Value {
   bool isPointer();
 
   /**
+   * Checks whether a value is a Null Pointer.
+   */
+  bool isNullPointer();
+
+  /**
    * Encodes a boolean.
    */
   static Value Boolean(uint32_t value);
@@ -101,6 +106,16 @@ class Value {
    */
   uint32_t decode();
 
+  /**
+   * Convertion to word.
+   */
   operator uint32_t() { return value_; }
   uint32_t toInt() { return value_; }
+
+  /**
+   * For convenient address comparison.
+   */
+  inline friend bool operator==(const Value& v, int i) {
+    return i == const_cast<Value&>(v).toInt();
+  }
 };

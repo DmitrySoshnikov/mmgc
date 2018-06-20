@@ -64,6 +64,14 @@ TEST(Value, isPointer) {
   EXPECT_EQ(Value::Number(0b11).isPointer(), false);
 }
 
+TEST(Value, isNullPointer) {
+  EXPECT_EQ(Value::Pointer(0b10).isPointer(), true);
+  EXPECT_EQ(Value::Pointer(0b10).isNullPointer(), false);
+
+  EXPECT_EQ(Value::Pointer(nullptr).isPointer(), true);
+  EXPECT_EQ(Value::Pointer(nullptr).isNullPointer(), true);
+}
+
 TEST(Value, isBoolean) {
   EXPECT_EQ(Value::Boolean(1).isBoolean(), true);
   EXPECT_EQ(Value::Number(1).isBoolean(), false);

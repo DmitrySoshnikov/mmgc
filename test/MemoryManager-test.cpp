@@ -99,6 +99,7 @@ TEST(MemoryManager, allocate) {
   mm.reset();
 
   auto p1 = mm.allocate(3);
+  EXPECT_EQ(p1.isPointer(), true);
   // 0-3 - header, 4 - payload:
   EXPECT_EQ(p1, 4);
 

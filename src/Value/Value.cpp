@@ -65,6 +65,13 @@ bool Value::isPointer() {
 }
 
 /**
+ * Checks whether a value is a Null Pointer.
+ */
+bool Value::isNullPointer() {
+  return isPointer() && value_ == 0;
+}
+
+/**
  * Encodes a boolean.
  */
 Value Value::Boolean(uint32_t value) { return encode(value, Type::Boolean); }

@@ -133,13 +133,13 @@ class MemoryManager {
    * Allocates a memory chunk with an object header.
    * The payload pointer is set to the first byte (after the header).
    *
-   * This returns a "virtual pointer", the byte address in the virtual
-   * heap. To convert it to C++ pointer, use `asWordPointer(p)` or
+   * This returns a "virtual pointer" (Value::Pointer), the byte address in
+   * the virtual heap. To convert it to C++ pointer, use `asWordPointer(p)` or
    * `asBytePointer(p)`.
    *
-   * -1 payload signals OOM.
+   * Value::Pointer(nullptr) payload signals OOM.
    */
-  int32_t allocate(uint32_t n);
+  Value allocate(uint32_t n);
 
   /**
    * Frees previously allocated block. The block should contain

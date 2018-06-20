@@ -103,13 +103,13 @@ Value* MemoryManager::readValue(uint32_t address) {
  * Allocates a memory chunk with an object header.
  * The payload pointer is set to the first byte (after the header).
  *
- * This returns a "virtual pointer" (handle), the byte address in the virtual
- * heap. To convert it to C++ pointer, use `asWordPointer(p)` or
- * `asBytePointer(p)` accordingly.
+ * This returns a "virtual pointer" (Value::Pointer), the byte address in
+ * the virtual heap. To convert it to C++ pointer, use `asWordPointer(p)` or
+ * `asBytePointer(p)`.
  *
- * -1 payload signals OOM.
+ * Value::Pointer(nullptr) payload signals OOM.
  */
-int32_t MemoryManager::allocate(uint32_t n) {
+Value MemoryManager::allocate(uint32_t n) {
   n = align<uint32_t>(n);
 
   for (const auto& free : freeList) {
@@ -146,10 +146,10 @@ int32_t MemoryManager::allocate(uint32_t n) {
     // Update total object count.
     _objectCount++;
 
-    return payload;
+    return Value::Pointer(payload);
   }
 
-  return -1;
+  return Value::Pointer(nullptr);
 }
 
 /**
