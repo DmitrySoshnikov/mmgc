@@ -72,6 +72,33 @@ TEST(Value, isNullPointer) {
   EXPECT_EQ(Value::Pointer(nullptr).isNullPointer(), true);
 }
 
+TEST(Value, PointerArithmetics) {
+  auto p = Value::Pointer(8);
+
+  // Word aligned arithmetics.
+  EXPECT_EQ(p + 1, 12);
+  EXPECT_EQ(p + 2, 16);
+
+  // Prefix ++.
+  EXPECT_EQ(++p, 12);
+  EXPECT_EQ(p, 12);
+
+  // // Postfix ++.
+  EXPECT_EQ(p++, 12);
+  EXPECT_EQ(p, 16);
+
+  EXPECT_EQ(p - 1, 12);
+  EXPECT_EQ(p - 2, 8);
+
+  // Prefix --.
+  EXPECT_EQ(--p, 12);
+  EXPECT_EQ(p, 12);
+
+  // // Postfix --.
+  EXPECT_EQ(p--, 12);
+  EXPECT_EQ(p, 8);
+}
+
 TEST(Value, isBoolean) {
   EXPECT_EQ(Value::Boolean(1).isBoolean(), true);
   EXPECT_EQ(Value::Number(1).isBoolean(), false);

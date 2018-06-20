@@ -151,9 +151,9 @@ TEST(MemoryManager, getPointers) {
 
   auto p1 = mm.allocate(16);
   mm.writeValue(p1, Value::Number(1));
-  mm.writeValue(p1 + 4, Value::Pointer(20));
-  mm.writeValue(p1 + 8, Value::Boolean(1));
-  mm.writeValue(p1 + 12, Value::Pointer(24));
+  mm.writeValue(p1 + 1, Value::Pointer(20));
+  mm.writeValue(p1 + 2, Value::Boolean(1));
+  mm.writeValue(p1 + 3, Value::Pointer(24));
 
   auto p1Pointers = mm.getPointers(p1);
 
@@ -172,10 +172,10 @@ TEST(MemoryManager, getObjectCount) {
 
   // Linked list: number value, and next pointer.
   mm.writeValue(p1, Value::Number(1));
-  mm.writeValue(p1 + 4, Value::Pointer(p2));
+  mm.writeValue(p1 + 1, Value::Pointer(p2));
 
   mm.writeValue(p2, Value::Number(2));
-  mm.writeValue(p2 + 4, Value::Pointer(nullptr));
+  mm.writeValue(p2 + 1, Value::Pointer(nullptr));
 
   auto p3 = mm.allocate(4);
   mm.writeValue(p3, Value::Number(10));

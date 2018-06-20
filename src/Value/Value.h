@@ -41,13 +41,13 @@ class Value {
   /**
    * Actual storage.
    */
-  uint32_t value_;
+  uint32_t _value;
 
  public:
   /**
    * Default constructor.
    */
-  Value(uint32_t value) : value_(value) {}
+  Value(uint32_t value) : _value(value) {}
 
   /**
    * Values constant declarations.
@@ -109,8 +109,8 @@ class Value {
   /**
    * Convertion to word.
    */
-  operator uint32_t() { return value_; }
-  uint32_t toInt() { return value_; }
+  operator uint32_t() { return _value; }
+  uint32_t toInt() { return _value; }
 
   /**
    * For convenient address comparison.
@@ -118,4 +118,21 @@ class Value {
   inline friend bool operator==(const Value& v, int i) {
     return i == const_cast<Value&>(v).toInt();
   }
+
+  /**
+   * Word aligned pointer arithmetics.
+   */
+  Value operator +(int i);
+  Value operator +=(int i);
+  Value& operator ++();
+  Value operator ++(int);
+  Value operator -(int i);
+  Value operator -=(int i);
+  Value& operator --();
+  Value operator --(int);
+
+  /**
+   * Enforces the pointer.
+   */
+  void _enforcePointer();
 };
