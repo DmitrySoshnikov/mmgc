@@ -82,6 +82,9 @@ void MemoryManager::writeValue(uint32_t address, uint32_t value,
  * Writes a Value at address.
  */
 void MemoryManager::writeValue(uint32_t address, Value& value) {
+  if (_writeBarrier != nullptr) {
+    _writeBarrier(address, value);
+  }
   writeWord(address, value);
 }
 
@@ -89,6 +92,9 @@ void MemoryManager::writeValue(uint32_t address, Value& value) {
  * Writes a Value at address.
  */
 void MemoryManager::writeValue(uint32_t address, Value&& value) {
+  if (_writeBarrier != nullptr) {
+    _writeBarrier(address, value);
+  }
   writeWord(address, value);
 }
 

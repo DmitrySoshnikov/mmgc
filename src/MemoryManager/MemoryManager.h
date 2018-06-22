@@ -42,12 +42,27 @@ class MemoryManager {
    */
   uint32_t _objectCount;
 
+  /**
+   * Write barrier.
+   *
+   * Several GC algorithms use write barrier to do extra operation
+   * before pointer operations. E.g. Reference Counting collector
+   * updates the counter, generation collector handles inter-generational
+   * pointers, etc.
+   */
+  std::function<void(uint32_t, Value& value)> _writeBarrier;
+
  public:
-  MemoryManager(uint32_t heapSize)
-      : _heapSize(heapSize), heap(heapSize, 0), _objectCount(0), freeList() {
+  MemoryManager(
+      uint32_t heapSize,
+      std::function<void(uint32_t, Value& value)> writeBarrier = nullptr)
+      : _heapSize(heapSize),
+        _writeBarrier(writeBarrier),
+        _objectCount(0),
+        heap(heapSize, 0),
+        freeList() {
     reset();
   }
-  MemoryManager(const MemoryManager&) = delete;
 
   /**
    * Virtual heap storage.

@@ -7,10 +7,11 @@
 #include <iostream>
 #include <memory>
 
-#include "gc/MarkSweepGC/MarkSweepGC.h"
 #include "MemoryManager/MemoryManager.h"
 #include "MemoryManager/ObjectHeader.h"
 #include "Value/Value.h"
+#include "gc/MarkSweepGC/MarkSweepGC.h"
+#include "util/number-util.h"
 
 #define log(title, value) std::cout << title << " " << value << std::endl
 
@@ -45,6 +46,26 @@ int main(int argc, char* argv[]) {
 
   log("\nAfter GC:", "");
   mm->dump();
+
+  // Write barrier.
+  mm = std::make_shared<MemoryManager>(32, [&](uint32_t address, Value& value) {
+    auto prevValue = mm->readValue(address);
+
+    std::cout << "\n-- Write barrier is called -- \n" << std::endl;
+
+    log("  Address:", int_to_hex(address));
+
+    log("\nOld value:", *prevValue);
+    log("Old value is pointer:", prevValue->isPointer());
+
+    log("\nNew value:", value);
+    log("Old value is pointer:", value.isPointer());
+  });
+
+  mm->writeValue(4, Value::Pointer(8));
+
+  mm->writeValue(4, Value::Pointer(12));
+
 
   return 0;
 }

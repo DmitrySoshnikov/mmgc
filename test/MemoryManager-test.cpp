@@ -186,4 +186,19 @@ TEST(MemoryManager, getObjectCount) {
   EXPECT_EQ(mm.getObjectCount(), 2);
 }
 
+TEST(MemoryManager, writeBarrier) {
+  uint32_t _address = 0;
+  auto _value = Value::Pointer(nullptr);
+
+  MemoryManager mm(32, [&](uint32_t address, Value& value) {
+    _address = address;
+    _value = value;
+  });
+
+  mm.writeValue(4, Value::Pointer(8));
+
+  EXPECT_EQ(_address, 4);
+  EXPECT_EQ(_value, 8);
+}
+
 }  // namespace
