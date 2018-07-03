@@ -14,6 +14,7 @@
 #include "../Value/Value.h"
 #include "../util/number-util.h"
 
+#include "Heap.h"
 #include "ObjectHeader.h"
 
 /**
@@ -53,21 +54,21 @@ class MemoryManager {
   std::function<void(uint32_t, Value& value)> _writeBarrier;
 
  public:
+  /**
+   * Virtual heap.
+   */
+  std::shared_ptr<Heap> heap;
+
   MemoryManager(
       uint32_t heapSize,
       std::function<void(uint32_t, Value& value)> writeBarrier = nullptr)
       : _heapSize(heapSize),
         _writeBarrier(writeBarrier),
         _objectCount(0),
-        heap(heapSize, 0),
+        heap(std::make_shared<Heap>(heapSize)),
         freeList() {
     reset();
   }
-
-  /**
-   * Virtual heap storage.
-   */
-  std::vector<uint8_t> heap;
 
   /**
    * Free list.
@@ -97,12 +98,12 @@ class MemoryManager {
   /**
    * Returns a byte array at offset.
    */
-  uint8_t* asBytePointer(uint32_t address);
+  uint8_t* asBytePointer(Word address);
 
   /**
    * Returns a word array at offset.
    */
-  uint32_t* asWordPointer(uint32_t address);
+  Word* asWordPointer(Word address);
 
   /**
    * Writes a word at address.
@@ -112,37 +113,37 @@ class MemoryManager {
   /**
    * Reads a word at address.
    */
-  uint32_t readWord(uint32_t address);
+  Word readWord(Word address);
 
   /**
    * Writes a byte at word address + byte offset.
    */
-  void writeByte(uint32_t address, uint8_t value);
+  void writeByte(Word address, uint8_t value);
 
   /**
    * Reads a byte at address, and offset.
    */
-  uint8_t readByte(uint32_t address);
+  uint8_t readByte(Word address);
 
   /**
    * Writes a Value at address.
    */
-  void writeValue(uint32_t address, uint32_t value, Type valueType);
+  void writeValue(Word address, uint32_t value, Type valueType);
 
   /**
    * Writes a Value at address.
    */
-  void writeValue(uint32_t address, Value& value);
+  void writeValue(Word address, Value& value);
 
   /**
    * Writes a Value at address.
    */
-  void writeValue(uint32_t address, Value&& value);
+  void writeValue(Word address, Value&& value);
 
   /**
    * Reads a Value at address.
    */
-  Value* readValue(uint32_t address);
+  Value* readValue(Word address);
 
   /**
    * Allocates a memory chunk with an object header.
@@ -160,17 +161,17 @@ class MemoryManager {
    * Frees previously allocated block. The block should contain
    * correct object header, otherwise the result is not defined.
    */
-  void free(uint32_t address);
+  void free(Word address);
 
   /**
    * Returns object header.
    */
-  ObjectHeader* getHeader(uint32_t address);
+  ObjectHeader* getHeader(Word address);
 
   /**
    * Sizeof operator.
    */
-  uint16_t sizeOf(uint32_t address);
+  uint16_t sizeOf(Word address);
 
   /**
    * Prints memory dump.
@@ -180,12 +181,12 @@ class MemoryManager {
   /**
    * Returns root objects (where GC starts analysis from).
    */
-  std::vector<uint32_t> getRoots();
+  std::vector<Word> getRoots();
 
   /**
    * Returns child pointers of this object.
    */
-  std::vector<Value*> getPointers(uint32_t address);
+  std::vector<Value*> getPointers(Word address);
 
   /**
    * Returns total amount of objects on the heap.

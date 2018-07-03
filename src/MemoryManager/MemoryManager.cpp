@@ -28,47 +28,47 @@ uint32_t MemoryManager::getWordsCount() { return _heapSize / getWordSize(); }
 /**
  * Returns number of words.
  */
-uint32_t MemoryManager::getWordSize() { return sizeof(uint32_t); }
+uint32_t MemoryManager::getWordSize() { return sizeof(Word); }
 
 /**
  * Returns a byte array at offset.
  */
-uint8_t* MemoryManager::asBytePointer(uint32_t address) {
-  return (uint8_t*)&heap[address];
+uint8_t* MemoryManager::asBytePointer(Word address) {
+  return heap->asBytePointer(address);
 }
 
 /**
  * Returns a word array at offset.
  */
-uint32_t* MemoryManager::asWordPointer(uint32_t address) {
-  return (uint32_t*)&heap[address];
+Word* MemoryManager::asWordPointer(Word address) {
+  return heap->asWordPointer(address);
 }
 
 /**
  * Writes a word at address.
  */
-void MemoryManager::writeWord(uint32_t address, uint32_t value) {
+void MemoryManager::writeWord(Word address, uint32_t value) {
   *asWordPointer(address) = value;
 }
 
 /**
  * Reads a word at address.
  */
-uint32_t MemoryManager::readWord(uint32_t address) {
+uint32_t MemoryManager::readWord(Word address) {
   return *asWordPointer(address);
 }
 
 /**
  * Writes a byte at word address + byte offset.
  */
-void MemoryManager::writeByte(uint32_t address, uint8_t value) {
-  heap[address] = value;
+void MemoryManager::writeByte(Word address, uint8_t value) {
+  (*heap)[address] = value;
 }
 
 /**
  * Reads a byte at address, and offset.
  */
-uint8_t MemoryManager::readByte(uint32_t address) { return heap[address]; }
+uint8_t MemoryManager::readByte(uint32_t address) { return (*heap)[address]; }
 
 /**
  * Writes a Value at address.
@@ -135,7 +135,7 @@ Value MemoryManager::allocate(uint32_t n) {
     freeList.remove(free);
 
     auto rawPayload = ((uint32_t*)header) + 1;
-    auto payload = (uint8_t*)rawPayload - asBytePointer(0);
+    auto payload = heap->asVirtualAddress(rawPayload);
 
     auto nextHeaderP = payload + n;
 
@@ -162,7 +162,7 @@ Value MemoryManager::allocate(uint32_t n) {
  * Frees previously allocated block. The block should contain
  * correct object header, otherwise the result is not defined.
  */
-void MemoryManager::free(uint32_t address) {
+void MemoryManager::free(Word address) {
   auto header = getHeader(address);
 
   // Avoid "double-free".
@@ -180,21 +180,21 @@ void MemoryManager::free(uint32_t address) {
 /**
  * Returns object header.
  */
-ObjectHeader* MemoryManager::getHeader(uint32_t address) {
+ObjectHeader* MemoryManager::getHeader(Word address) {
   return (ObjectHeader*)(asWordPointer(address) - 1);
 }
 
 /**
  * Sizeof operator.
  */
-uint16_t MemoryManager::sizeOf(uint32_t address) {
+uint16_t MemoryManager::sizeOf(Word address) {
   return getHeader(address)->size;
 }
 
 /**
  * Returns child pointers of this object.
  */
-std::vector<Value*> MemoryManager::getPointers(uint32_t address) {
+std::vector<Value*> MemoryManager::getPointers(Word address) {
   std::vector<Value*> pointers;
 
   auto header = getHeader(address);
@@ -258,7 +258,7 @@ void MemoryManager::dump() {
  * Initializes the heap to zeros.
  */
 void MemoryManager::_resetHeap() {
-  memset(&heap[0], 0, heap.size() * sizeof(heap[0]));
+  memset(&(*heap)[0], 0, getHeapSize());
 }
 
 /**

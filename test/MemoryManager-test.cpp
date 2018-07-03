@@ -13,7 +13,6 @@ static MemoryManager mm(32);
 
 TEST(MemoryManager, API) {
   EXPECT_EQ(mm.getHeapSize(), 32);
-  EXPECT_EQ(mm.heap.size(), 32);
   EXPECT_EQ(mm.getWordSize(), 4);
   EXPECT_EQ(mm.getWordsCount(), 8);
 }
@@ -26,12 +25,12 @@ TEST(MemoryManager, reset) {
 
   // All other heap elements are reset.
   for (size_t i = 1; i < 8; i++) {
-    EXPECT_EQ(mm.heap[i], 0x0);
+    EXPECT_EQ((*mm.heap)[i], 0x0);
   }
 }
 
 TEST(MemoryManager, readWord) {
-  mm.heap[0] = 255;
+  (*mm.heap)[0] = 255;
   EXPECT_EQ(mm.readWord(0), 255);
 }
 

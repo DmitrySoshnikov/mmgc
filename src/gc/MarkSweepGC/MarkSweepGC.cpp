@@ -47,7 +47,7 @@ void MarkSweepGC::mark() {
 void MarkSweepGC::sweep() {
   auto scan = 0 + sizeof(ObjectHeader);
 
-  while (scan < mm->heap.size()) {
+  while (scan < mm->getHeapSize()) {
     auto header = mm->getHeader(scan);
 
     // Alive object, reset the mark bit for future collection cycles.
