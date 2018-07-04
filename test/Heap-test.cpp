@@ -12,6 +12,7 @@ TEST(Heap, API) {
   Heap heap(32);
 
   EXPECT_EQ(heap.storage.size(), 32);
+  EXPECT_EQ(heap.size(), heap.storage.size());
 
   heap[0] = 10;
   EXPECT_EQ(heap[0], 10);
@@ -33,6 +34,9 @@ TEST(Heap, API) {
   *heap.asBytePointer(3) = 0xCC;
 
   EXPECT_EQ(*heap.asWordPointer(0), 0xCCDDEEFF);
+
+  heap.reset();
+  EXPECT_EQ(*heap.asWordPointer(0), 0x00000000);
 }
 
 }  // namespace

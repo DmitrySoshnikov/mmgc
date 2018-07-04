@@ -44,6 +44,7 @@ add_executable(testall ${TEST_SRC_FILES})
 
 target_link_libraries(testall
     Value
+    SingleFreeListAllocator
     MemoryManager
     MarkSweepGC
     libgtest
