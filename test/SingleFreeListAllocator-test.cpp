@@ -67,6 +67,41 @@ TEST(SingleFreeListAllocator, free) {
   EXPECT_EQ(p4, 4);
 }
 
+TEST(SingleFreeListAllocator, blockSize) {
+  reset();
+
+  auto p1 = allocator.allocate(16);
+  EXPECT_EQ(allocator.getHeader(p1)->size, 16);
+  EXPECT_EQ(p1, 4);
+
+  auto p2 = allocator.allocate(8);
+  EXPECT_EQ(allocator.getHeader(p2)->size, 8);
+  EXPECT_EQ(p2, 24);
+
+  allocator.free(p1);
+  EXPECT_EQ(allocator.getHeader(p1)->size, 16);
+  EXPECT_EQ(allocator.getHeader(p1)->used, false);
+
+  p1 = allocator.allocate(12);
+  EXPECT_EQ(p1, 4);
+  // Couldn't split, the block is still 16.
+  EXPECT_EQ(allocator.getHeader(p1)->size, 16);
+  EXPECT_EQ(allocator.getHeader(p1)->used, true);
+  EXPECT_EQ(p1, 4);
+
+  allocator.free(p1);
+  p1 = allocator.allocate(8);
+  EXPECT_EQ(p1, 4);
+  // Can split:
+  EXPECT_EQ(allocator.getHeader(p1)->size, 8);
+  EXPECT_EQ(allocator.getHeader(p1)->used, true);
+
+  p2 = allocator.allocate(4);
+  EXPECT_EQ(allocator.getHeader(p2)->size, 4);
+  EXPECT_EQ(p2, 16);
+
+}
+
 TEST(SingleFreeListAllocator, reset) {
   reset();
 

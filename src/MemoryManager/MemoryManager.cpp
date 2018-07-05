@@ -47,7 +47,7 @@ Word* MemoryManager::asWordPointer(Word address) {
 /**
  * Writes a word at address.
  */
-void MemoryManager::writeWord(Word address, uint32_t value) {
+void MemoryManager::writeWord(Word address, Word value) {
   *asWordPointer(address) = value;
 }
 
@@ -68,12 +68,12 @@ void MemoryManager::writeByte(Word address, uint8_t value) {
 /**
  * Reads a byte at address, and offset.
  */
-uint8_t MemoryManager::readByte(uint32_t address) { return (*heap)[address]; }
+uint8_t MemoryManager::readByte(Word address) { return (*heap)[address]; }
 
 /**
  * Writes a Value at address.
  */
-void MemoryManager::writeValue(uint32_t address, uint32_t value,
+void MemoryManager::writeValue(Word address, Word value,
                                Type valueType) {
   writeWord(address, Value::encode(value, valueType));
 }

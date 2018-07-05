@@ -32,23 +32,24 @@ Value SingleFreeListAllocator::allocate(uint32_t n) {
     // Found block of a needed size:
 
     header->used = true;
-    header->size = n;
-
     freeList.remove(free);
 
     auto rawPayload = ((Word*)header) + 1;
     auto payload = heap->asVirtualAddress(rawPayload);
 
-    auto nextHeaderP = payload + n;
+    // See if we can split the larger block, reserving at least
+    // one word with a header.
+    auto canSplit = (size >= n + (sizeof(Word) * 2));
 
-    // Reserver 2 words (for header, and at least one data word).
-    if (nextHeaderP <= heap->size() - (sizeof(Word) * 2)) {
-      auto nextHeader = (ObjectHeader*)(heap->asWordPointer(nextHeaderP));
-      if (!nextHeader->used) {
-        auto nextSize = (uint16_t)(size - n - sizeof(ObjectHeader));
-        *heap->asWordPointer(nextHeaderP) = ObjectHeader{.size = nextSize};
-        freeList.push_back(nextHeaderP);
-      }
+    if (canSplit) {
+      // This block becomes of size `n`.
+      header->size = n;
+
+      // Split the new block.
+      auto nextHeaderP = payload + n;
+      auto nextSize = (uint16_t)(size - n - sizeof(ObjectHeader));
+      *heap->asWordPointer(nextHeaderP) = ObjectHeader{.size = nextSize};
+      freeList.push_back(nextHeaderP);
     }
 
     return Value::Pointer(payload);
