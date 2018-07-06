@@ -6,7 +6,10 @@
 #pragma once
 
 #include <stdint.h>
+#include <iostream>
 #include <vector>
+
+#include "../util/number-util.h"
 
 /**
  * 32 bit machine word.
@@ -49,7 +52,32 @@ struct Heap {
   /**
    * Resets this heap.
    */
-  void reset() {
-    memset(&storage[0], 0, storage.size());
+  void reset() { memset(&storage[0], 0, storage.size()); }
+
+  /**
+   * Dumps the heap memory.
+   */
+  void dump() {
+    std::cout << "\n Memory dump:\n";
+    std::cout << "------------------------\n\n";
+
+    int address = 0;
+    std::string row = "";
+
+    auto words = asWordPointer(0);
+    auto wordsCount = size() / sizeof(Word);
+
+    for (auto i = 0; i < wordsCount; i++) {
+      auto v = words[i];
+      row += int_to_hex(address) + " : ";
+      auto value = int_to_hex(v, /*usePrefix*/ false);
+      insert_delimeter(value, 2, " ");
+      row += value;
+      address += sizeof(Word);
+      std::cout << row << std::endl;
+      row.clear();
+    }
+
+    std::cout << std::endl;
   }
 };

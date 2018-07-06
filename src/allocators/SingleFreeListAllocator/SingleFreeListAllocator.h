@@ -7,10 +7,17 @@
 
 #include <stdint.h>
 #include <list>
+#include <vector>
 
+#include "../../Value/Value.h"
 #include "../IAllocator.h"
 
 class SingleFreeListAllocator {
+  /**
+   * Total object count on the heap.
+   */
+  uint32_t _objectCount;
+
   /**
    * Free list: linked list of all free memory chunks.
    */
@@ -53,6 +60,16 @@ class SingleFreeListAllocator {
    * Returns the reference to the object header.
    */
   ObjectHeader* getHeader(Word address);
+
+  /**
+   * Returns total amount of objects on the heap.
+   */
+  uint32_t getObjectCount();
+
+  /**
+   * Returns child pointers of this object.
+   */
+  std::vector<Value*> getPointers(Word address);
 
  private:
   void _resetFreeList();

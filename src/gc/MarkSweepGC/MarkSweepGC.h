@@ -12,11 +12,11 @@
 #include <string>
 #include <vector>
 
-#include "../../MemoryManager/MemoryManager.h"
 #include "../../Value/Value.h"
-#include "../../util/number-util.h"
-
+#include "../../allocators/SingleFreeListAllocator/SingleFreeListAllocator.h"
 #include "../../MemoryManager/ObjectHeader.h"
+
+#include "../../util/number-util.h"
 
 /**
  * Stats for the collection cycle.
@@ -50,17 +50,19 @@ struct MarkSweepStats {
 class MarkSweepGC {
  public:
   /**
-   * Associated memory manager.
+   * Associated allocator.
    */
-  std::shared_ptr<MemoryManager> mm;
+  std::shared_ptr<SingleFreeListAllocator> allocator;
 
   /**
    * Stats for the collection cycle.
    */
   std::shared_ptr<MarkSweepStats> stats;
 
-  MarkSweepGC(const std::shared_ptr<MemoryManager>& mm)
-      : mm(mm), stats(std::make_shared<MarkSweepStats>()), _worklist(){};
+  MarkSweepGC(const std::shared_ptr<SingleFreeListAllocator>& allocator)
+      : allocator(allocator),
+        stats(std::make_shared<MarkSweepStats>()),
+        _worklist(){};
 
   /**
    * Main collection cycle.
@@ -77,6 +79,11 @@ class MarkSweepGC {
    * adding back to the free list.
    */
   void sweep();
+
+  /**
+   * Returns root objects (where GC starts analysis from).
+   */
+  std::vector<Word> getRoots();
 
  private:
   /**

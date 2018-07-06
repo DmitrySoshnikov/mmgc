@@ -114,6 +114,30 @@ TEST(SingleFreeListAllocator, reset) {
   EXPECT_EQ(p2, 4);
 }
 
+TEST(SingleFreeListAllocator, getObjectCount) {
+  reset();
+
+  auto p1 = allocator.allocate(8);
+  auto p2 = allocator.allocate(8);
+
+  EXPECT_EQ(allocator.getObjectCount(), 2);
+
+  // Linked list: number value, and next pointer.
+  *allocator.heap->asWordPointer(p1) = Value::Number(1);
+  *allocator.heap->asWordPointer(p1 + 1) = Value::Pointer(p2);
+
+  *allocator.heap->asWordPointer(p2) = Value::Number(2);
+  *allocator.heap->asWordPointer(p2 + 1) = Value::Pointer(nullptr);
+
+  auto p3 = allocator.allocate(4);
+  *allocator.heap->asWordPointer(p3) = Value::Number(10);
+
+  EXPECT_EQ(allocator.getObjectCount(), 3);
+
+  allocator.free(p3);
+  EXPECT_EQ(allocator.getObjectCount(), 2);
+}
+
 TEST(SingleFreeListAllocator, getHeader) {
   reset();
 

@@ -4,7 +4,6 @@
  */
 
 #include "SingleFreeListAllocator.h"
-
 #include "../../util/number-util.h"
 
 /**
@@ -52,6 +51,9 @@ Value SingleFreeListAllocator::allocate(uint32_t n) {
       freeList.push_back(nextHeaderP);
     }
 
+    // Update total object count.
+    _objectCount++;
+
     return Value::Pointer(payload);
   }
 
@@ -71,6 +73,9 @@ void SingleFreeListAllocator::free(Word address) {
 
   header->used = 0;
   freeList.push_back((uint8_t*)header - heap->asBytePointer(0));
+
+  // Update total object count.
+  _objectCount--;
 }
 
 /**
@@ -81,9 +86,38 @@ ObjectHeader* SingleFreeListAllocator::getHeader(Word address) {
 }
 
 /**
+ * Returns child pointers of this object.
+ */
+std::vector<Value*> SingleFreeListAllocator::getPointers(Word address) {
+  std::vector<Value*> pointers;
+
+  auto header = getHeader(address);
+  auto words = header->size / sizeof(Word);
+
+  while (words-- > 0) {
+    auto v = (Value*)heap->asWordPointer(address);
+    address += sizeof(Word);
+    if (!v->isPointer()) {
+      continue;
+    }
+    pointers.push_back(v);
+  }
+
+  return pointers;
+}
+
+/**
+ * Returns total amount of objects on the heap.
+ */
+uint32_t SingleFreeListAllocator::getObjectCount() { return _objectCount; }
+
+/**
  * Resets the allocator.
  */
-void SingleFreeListAllocator::reset() { _resetFreeList(); }
+void SingleFreeListAllocator::reset() {
+  _resetFreeList();
+  _objectCount = 0;
+}
 
 void SingleFreeListAllocator::_resetFreeList() {
   freeList.clear();

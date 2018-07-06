@@ -6,6 +6,7 @@
 #pragma once
 
 #include <stdint.h>
+#include <vector>
 #include <memory>
 
 #include "../MemoryManager/Heap.h"
@@ -19,6 +20,11 @@
  * and also my Memory Manager to do actual allocation.
  */
 struct IAllocator {
+  /**
+   * Total object count on the heap.
+   */
+  uint32_t _objectCount;
+
   /**
    * Allocates `n` bytes (aligned by the size of the machine word).
    *
@@ -43,4 +49,14 @@ struct IAllocator {
    * can be placed in different positions.
    */
   virtual ObjectHeader* getHeader(Word address);
+
+  /**
+   * Returns total amount of objects on the heap.
+   */
+  uint32_t getObjectCount();
+
+  /**
+   * Returns child pointers of this object.
+   */
+  std::vector<Value*> getPointers(Word address);
 };

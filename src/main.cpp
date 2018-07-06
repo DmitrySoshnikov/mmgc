@@ -7,10 +7,11 @@
 #include <iostream>
 #include <memory>
 
-#include "MemoryManager/MemoryManager.h"
-#include "MemoryManager/ObjectHeader.h"
+#include "MemoryManager.h"
+#include "ObjectHeader.h"
+#include "allocators/SingleFreeListAllocator/SingleFreeListAllocator.h"
 #include "Value/Value.h"
-#include "gc/MarkSweepGC/MarkSweepGC.h"
+#include "MarkSweepGC.h"
 #include "util/number-util.h"
 
 #define log(title, value) std::cout << title << " " << value << std::endl
@@ -36,7 +37,10 @@ int main(int argc, char* argv[]) {
 
   mm->dump();
 
-  MarkSweepGC msgc(mm);
+  auto heap = mm->heap;
+  auto sflAllocator = std::make_shared<SingleFreeListAllocator>(heap);
+
+  MarkSweepGC msgc(sflAllocator);
 
   auto gcStats = msgc.collect();
 
