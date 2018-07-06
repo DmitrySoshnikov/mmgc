@@ -5,6 +5,7 @@
 
 #include "MarkSweepGC.h"
 #include "MemoryManager.h"
+#include "../src/allocators/SingleFreeListAllocator/SingleFreeListAllocator.h"
 #include "gtest/gtest.h"
 
 namespace {

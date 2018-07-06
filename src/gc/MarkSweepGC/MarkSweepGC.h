@@ -13,7 +13,7 @@
 #include <vector>
 
 #include "../../Value/Value.h"
-#include "../../allocators/SingleFreeListAllocator/SingleFreeListAllocator.h"
+#include "../../allocators/IAllocator.h"
 #include "../../MemoryManager/ObjectHeader.h"
 
 #include "../../util/number-util.h"
@@ -52,14 +52,14 @@ class MarkSweepGC {
   /**
    * Associated allocator.
    */
-  std::shared_ptr<SingleFreeListAllocator> allocator;
+  std::shared_ptr<IAllocator> allocator;
 
   /**
    * Stats for the collection cycle.
    */
   std::shared_ptr<MarkSweepStats> stats;
 
-  MarkSweepGC(const std::shared_ptr<SingleFreeListAllocator>& allocator)
+  MarkSweepGC(const std::shared_ptr<IAllocator>& allocator)
       : allocator(allocator),
         stats(std::make_shared<MarkSweepStats>()),
         _worklist(){};

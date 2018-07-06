@@ -12,7 +12,7 @@
 #include "../../Value/Value.h"
 #include "../IAllocator.h"
 
-class SingleFreeListAllocator {
+class SingleFreeListAllocator : public IAllocator {
   /**
    * Total object count on the heap.
    */
@@ -24,15 +24,13 @@ class SingleFreeListAllocator {
   std::list<uint32_t> freeList;
 
  public:
-  /**
-   * Associated heap.
-   */
-  std::shared_ptr<Heap> heap;
 
-  explicit SingleFreeListAllocator(std::shared_ptr<Heap> heap)
-      : heap(heap), freeList() {
+  SingleFreeListAllocator(std::shared_ptr<Heap> heap)
+      : IAllocator(heap), freeList() {
     reset();
   }
+
+  ~SingleFreeListAllocator() {}
 
   /**
    * Allocates a memory chunk with an object header.
