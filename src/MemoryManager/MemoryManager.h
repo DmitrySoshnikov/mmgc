@@ -17,63 +17,64 @@
 #include "Heap.h"
 #include "ObjectHeader.h"
 
+#include "../allocators/IAllocator.h"
+#include "../gc/ICollector.h"
+
 /**
- * Memory manager allocates, and tracks objects on the heap,
- * considering object header for the allocator, and collector
- * purposes. Maintains different views (byte, word) on the array
- * buffer.
+ * Memory manager is a thin wrapper on top of several modules used for
+ * automatic memory management.
  *
- * On allocation returns a pointer, set to the next byte after the
- * object header. Maintains the Free list abstraction for allocation.
+ * Encapulates:
  *
- *  +----+-------+------++---------+-------+
- *  | GC | Used? | Size || Payload | Align |
- *  +----+-------+------++---------+-------+
- *  ^                    ^
- *  ------ Header ------ User pointer
+ *   - `heap`: the actual heap being operated on (allocation, gc cylces)
+ *
+ *   - `allocator`: a particular allocator, conforming to the
+ *                  IAllocator interface
+ *
+ *   - `collector`: a particular garbage collector
  */
 class MemoryManager {
-  /**
-   * Size of the heap in bytes.
-   */
-  uint32_t _heapSize;
-
-  /**
-   * Total object count on the heap.
-   */
-  uint32_t _objectCount;
-
-  /**
-   * Write barrier.
-   *
-   * Several GC algorithms use write barrier to do extra operation
-   * before pointer operations. E.g. Reference Counting collector
-   * updates the counter, generation collector handles inter-generational
-   * pointers, etc.
-   */
-  std::function<void(uint32_t, Value& value)> _writeBarrier;
-
  public:
   /**
    * Virtual heap.
    */
   std::shared_ptr<Heap> heap;
 
+  /**
+   * Accociated allocator.
+   */
+  std::shared_ptr<IAllocator> allocator;
+
+  /**
+   * Accociated collector.
+   */
+  std::shared_ptr<ICollector> collector;
+
   MemoryManager(
-      uint32_t heapSize,
+      const std::shared_ptr<Heap> heap,
+      const std::shared_ptr<IAllocator> allocator,
+      const std::shared_ptr<ICollector> collector,
       std::function<void(uint32_t, Value& value)> writeBarrier = nullptr)
-      : _heapSize(heapSize),
-        _writeBarrier(writeBarrier),
-        _objectCount(0),
-        heap(std::make_shared<Heap>(heapSize)),
-        freeList() {
+      : heap(heap),
+        allocator(allocator),
+        collector(collector),
+        writeBarrier_(writeBarrier) {
     reset();
   }
 
   /**
-   * Free list.
+   * Template factory.
    */
-  std::list<uint32_t> freeList;
+  template <class Allocator, class Collector, uint32_t heapSize>
+  static std::shared_ptr<MemoryManager> create(
+      std::function<void(uint32_t, Value& value)> writeBarrier = nullptr) {
+    auto heap = std::make_shared<Heap>(heapSize);
+    auto allocator = std::make_shared<Allocator>(heap);
+    auto collector = std::make_shared<Collector>(allocator);
+
+    return std::make_shared<MemoryManager>(heap, allocator, collector,
+                                           writeBarrier);
+  }
 
   /**
    * Resets the memory setting each word to 0.
@@ -164,6 +165,11 @@ class MemoryManager {
   void free(Word address);
 
   /**
+   * Runs a collection cycle.
+   */
+  std::shared_ptr<GCStats> collect();
+
+  /**
    * Returns object header.
    */
   ObjectHeader* getHeader(Word address);
@@ -177,11 +183,6 @@ class MemoryManager {
    * Prints memory dump.
    */
   void dump();
-
-  /**
-   * Returns root objects (where GC starts analysis from).
-   */
-  std::vector<Word> getRoots();
 
   /**
    * Returns child pointers of this object.
@@ -203,7 +204,15 @@ class MemoryManager {
    * Initially the object header stored at the beginning
    * of the heap defines the whole heap as a "free block".
    */
-  void _resetHeader();
+  void _initFirstBlock();
 
-  void _resetFreeList();
+  /**
+   * Write barrier.
+   *
+   * Several GC algorithms use write barrier to do extra operation
+   * before pointer operations. E.g. Reference Counting collector
+   * updates the counter, generation collector handles inter-generational
+   * pointers, etc.
+   */
+  std::function<void(uint32_t, Value& value)> writeBarrier_;
 };

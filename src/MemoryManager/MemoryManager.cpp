@@ -9,21 +9,20 @@
  * Resets the memory setting each word to 0.
  */
 void MemoryManager::reset() {
-  _resetHeap();
-  _resetFreeList();
-  _resetHeader();
-  _objectCount = 0;
+  heap->reset();
+  allocator->reset();
+  _initFirstBlock();
 }
 
 /**
  * Returns the size of the heap in bytes.
  */
-uint32_t MemoryManager::getHeapSize() { return _heapSize; }
+uint32_t MemoryManager::getHeapSize() { return heap->size(); }
 
 /**
  * Returns number of words.
  */
-uint32_t MemoryManager::getWordsCount() { return _heapSize / getWordSize(); }
+uint32_t MemoryManager::getWordsCount() { return heap->size() / getWordSize(); }
 
 /**
  * Returns number of words.
@@ -73,8 +72,7 @@ uint8_t MemoryManager::readByte(Word address) { return (*heap)[address]; }
 /**
  * Writes a Value at address.
  */
-void MemoryManager::writeValue(Word address, Word value,
-                               Type valueType) {
+void MemoryManager::writeValue(Word address, Word value, Type valueType) {
   writeWord(address, Value::encode(value, valueType));
 }
 
@@ -82,8 +80,8 @@ void MemoryManager::writeValue(Word address, Word value,
  * Writes a Value at address.
  */
 void MemoryManager::writeValue(uint32_t address, Value& value) {
-  if (_writeBarrier != nullptr) {
-    _writeBarrier(address, value);
+  if (writeBarrier_ != nullptr) {
+    writeBarrier_(address, value);
   }
   writeWord(address, value);
 }
@@ -92,8 +90,8 @@ void MemoryManager::writeValue(uint32_t address, Value& value) {
  * Writes a Value at address.
  */
 void MemoryManager::writeValue(uint32_t address, Value&& value) {
-  if (_writeBarrier != nullptr) {
-    _writeBarrier(address, value);
+  if (writeBarrier_ != nullptr) {
+    writeBarrier_(address, value);
   }
   writeWord(address, value);
 }
@@ -115,73 +113,24 @@ Value* MemoryManager::readValue(uint32_t address) {
  *
  * Value::Pointer(nullptr) payload signals OOM.
  */
-Value MemoryManager::allocate(uint32_t n) {
-  n = align<uint32_t>(n);
-
-  for (const auto& free : freeList) {
-    auto header = (ObjectHeader*)(asWordPointer(free));
-    auto size = header->size;
-
-    // Too small block, move further.
-    if (size < n) {
-      continue;
-    }
-
-    // Found block of a needed size:
-
-    header->used = true;
-    header->size = n;
-
-    freeList.remove(free);
-
-    auto rawPayload = ((uint32_t*)header) + 1;
-    auto payload = heap->asVirtualAddress(rawPayload);
-
-    auto nextHeaderP = payload + n;
-
-    // Reserver 2 words (for header, and at least one data word).
-    if (nextHeaderP <= _heapSize - (getWordSize() * 2)) {
-      auto nextHeader = (ObjectHeader*)(asWordPointer(nextHeaderP));
-      if (!nextHeader->used) {
-        auto nextSize = (uint16_t)(size - n - sizeof(ObjectHeader));
-        writeWord(nextHeaderP, ObjectHeader{.size = nextSize});
-        freeList.push_back(nextHeaderP);
-      }
-    }
-
-    // Update total object count.
-    _objectCount++;
-
-    return Value::Pointer(payload);
-  }
-
-  return Value::Pointer(nullptr);
-}
+Value MemoryManager::allocate(uint32_t n) { return allocator->allocate(n); }
 
 /**
  * Frees previously allocated block. The block should contain
  * correct object header, otherwise the result is not defined.
  */
-void MemoryManager::free(Word address) {
-  auto header = getHeader(address);
+void MemoryManager::free(Word address) { allocator->free(address); }
 
-  // Avoid "double-free".
-  if (!header->used) {
-    return;
-  }
-
-  header->used = 0;
-  freeList.push_back((uint8_t*)header - asBytePointer(0));
-
-  // Update total object count.
-  _objectCount--;
-}
+/**
+ * Runs a collection cycle.
+ */
+std::shared_ptr<GCStats> MemoryManager::collect() { return collector->collect(); }
 
 /**
  * Returns object header.
  */
 ObjectHeader* MemoryManager::getHeader(Word address) {
-  return (ObjectHeader*)(asWordPointer(address) - 1);
+  return allocator->getHeader(address);
 }
 
 /**
@@ -195,85 +144,26 @@ uint16_t MemoryManager::sizeOf(Word address) {
  * Returns child pointers of this object.
  */
 std::vector<Value*> MemoryManager::getPointers(Word address) {
-  std::vector<Value*> pointers;
-
-  auto header = getHeader(address);
-  auto wordSize = getWordSize();
-  auto words = header->size / wordSize;
-
-  while (words-- > 0) {
-    auto v = readValue(address);
-    address += wordSize;
-    if (!v->isPointer()) {
-      continue;
-    }
-    pointers.push_back(v);
-  }
-
-  return pointers;
+  return allocator->getPointers(address);
 }
 
 /**
  * Returns total amount of objects on the heap.
  */
-uint32_t MemoryManager::getObjectCount() { return _objectCount; }
-
-/**
- *
- */
-std::vector<uint32_t> MemoryManager::getRoots() {
-  std::vector<uint32_t> roots;
-  // TODO: impelement actual roots, use first block for now.
-  roots.push_back(0 + sizeof(ObjectHeader));
-  return roots;
-}
+uint32_t MemoryManager::getObjectCount() { return allocator->getObjectCount(); }
 
 /**
  * Prints memory dump.
  */
-void MemoryManager::dump() {
-  std::cout << "\n Memory dump:\n";
-  std::cout << "------------------------\n\n";
-
-  int address = 0;
-  std::string row = "";
-
-  auto words = asWordPointer(0);
-
-  for (auto i = 0; i < getWordsCount(); i++) {
-    auto v = words[i];
-    row += int_to_hex(address) + " : ";
-    auto value = int_to_hex(v, /*usePrefix*/ false);
-    insert_delimeter(value, 2, " ");
-    row += value;
-    address += getWordSize();
-    std::cout << row << std::endl;
-    row.clear();
-  }
-
-  std::cout << std::endl;
-}
-
-/**
- * Initializes the heap to zeros.
- */
-void MemoryManager::_resetHeap() {
-  memset(&(*heap)[0], 0, getHeapSize());
-}
+void MemoryManager::dump() { heap->dump(); }
 
 /**
  * Initially the object header stored at the beginning
  * of the heap defines the whole heap as a "free block".
  */
-void MemoryManager::_resetHeader() {
+void MemoryManager::_initFirstBlock() {
   writeWord(0, ObjectHeader{
-                   .size = (uint16_t)(_heapSize - sizeof(ObjectHeader)),
+                   .size = (uint16_t)(heap->size() - sizeof(ObjectHeader)),
                    .used = false,
-                   .mark = false,
                });
-}
-
-void MemoryManager::_resetFreeList() {
-  freeList.clear();
-  freeList.push_back(0);
 }

@@ -17,7 +17,7 @@
 #define log(title, value) std::cout << title << " " << value << std::endl
 
 int main(int argc, char* argv[]) {
-  auto mm = std::make_shared<MemoryManager>(64);
+  auto mm = MemoryManager::create<SingleFreeListAllocator, MarkSweepGC, 64>();
 
   auto p1 = mm->allocate(12);
 
@@ -37,12 +37,7 @@ int main(int argc, char* argv[]) {
 
   mm->dump();
 
-  auto heap = mm->heap;
-  auto sflAllocator = std::make_shared<SingleFreeListAllocator>(heap);
-
-  MarkSweepGC msgc(sflAllocator);
-
-  auto gcStats = msgc.collect();
+  auto gcStats = mm->collect();
 
   log("    total:", gcStats->total);
   log("    alive:", gcStats->alive);
@@ -52,7 +47,7 @@ int main(int argc, char* argv[]) {
   mm->dump();
 
   // Write barrier.
-  mm = std::make_shared<MemoryManager>(32, [&](uint32_t address, Value& value) {
+  mm = MemoryManager::create<SingleFreeListAllocator, MarkSweepGC, 32>([&](uint32_t address, Value& value) {
     auto prevValue = mm->readValue(address);
 
     std::cout << "\n-- Write barrier is called -- \n" << std::endl;

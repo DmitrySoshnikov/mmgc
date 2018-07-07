@@ -12,6 +12,21 @@
 #include "../../Value/Value.h"
 #include "../IAllocator.h"
 
+/**
+ *
+ * SFL (Single Free List) Allocator.
+ *
+ * Maintains a linked list of available blocks.
+ *
+ * On allocation returns a pointer, set to the next byte after the
+ * object header. Maintains the Free list abstraction for allocation.
+ *
+ *  +----+-------+------++---------+-------+
+ *  | GC | Used? | Size || Payload | Align |
+ *  +----+-------+------++---------+-------+
+ *  ^                    ^
+ *  ------ Header ------ User pointer
+ */
 class SingleFreeListAllocator : public IAllocator {
   /**
    * Total object count on the heap.
