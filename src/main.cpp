@@ -47,7 +47,7 @@ int main(int argc, char* argv[]) {
   mm->dump();
 
   // Write barrier.
-  mm = MemoryManager::create<SingleFreeListAllocator, MarkSweepGC, 32>([&](uint32_t address, Value& value) {
+  mm = MemoryManager::create<SingleFreeListAllocator, 32>([&](uint32_t address, Value& value) {
     auto prevValue = mm->readValue(address);
 
     std::cout << "\n-- Write barrier is called -- \n" << std::endl;
@@ -58,7 +58,7 @@ int main(int argc, char* argv[]) {
     log("Old value is pointer:", prevValue->isPointer());
 
     log("\nNew value:", value);
-    log("Old value is pointer:", value.isPointer());
+    log("New value is pointer:", value.isPointer());
   });
 
   mm->writeValue(4, Value::Pointer(8));

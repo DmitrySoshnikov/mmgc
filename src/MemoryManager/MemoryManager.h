@@ -53,8 +53,8 @@ class MemoryManager {
   MemoryManager(
       const std::shared_ptr<Heap> heap,
       const std::shared_ptr<IAllocator> allocator,
-      const std::shared_ptr<ICollector> collector,
-      std::function<void(uint32_t, Value& value)> writeBarrier = nullptr)
+      const std::shared_ptr<ICollector> collector = nullptr,
+      std::function<void(Word, Value& value)> writeBarrier = nullptr)
       : heap(heap),
         allocator(allocator),
         collector(collector),
@@ -67,12 +67,25 @@ class MemoryManager {
    */
   template <class Allocator, class Collector, uint32_t heapSize>
   static std::shared_ptr<MemoryManager> create(
-      std::function<void(uint32_t, Value& value)> writeBarrier = nullptr) {
+      std::function<void(Word, Value& value)> writeBarrier = nullptr) {
     auto heap = std::make_shared<Heap>(heapSize);
     auto allocator = std::make_shared<Allocator>(heap);
     auto collector = std::make_shared<Collector>(allocator);
 
     return std::make_shared<MemoryManager>(heap, allocator, collector,
+                                           writeBarrier);
+  }
+
+  /**
+   * Template factory.
+   */
+  template <class Allocator, uint32_t heapSize>
+  static std::shared_ptr<MemoryManager> create(
+      std::function<void(Word, Value& value)> writeBarrier = nullptr) {
+    auto heap = std::make_shared<Heap>(heapSize);
+    auto allocator = std::make_shared<Allocator>(heap);
+
+    return std::make_shared<MemoryManager>(heap, allocator, nullptr,
                                            writeBarrier);
   }
 
@@ -214,5 +227,5 @@ class MemoryManager {
    * updates the counter, generation collector handles inter-generational
    * pointers, etc.
    */
-  std::function<void(uint32_t, Value& value)> writeBarrier_;
+  std::function<void(Word, Value& value)> writeBarrier_;
 };

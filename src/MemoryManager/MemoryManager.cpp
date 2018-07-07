@@ -124,7 +124,13 @@ void MemoryManager::free(Word address) { allocator->free(address); }
 /**
  * Runs a collection cycle.
  */
-std::shared_ptr<GCStats> MemoryManager::collect() { return collector->collect(); }
+std::shared_ptr<GCStats> MemoryManager::collect() {
+  if (!collector) {
+    throw std::runtime_error("Collector is not specified.");
+  }
+
+  return collector->collect();
+}
 
 /**
  * Returns object header.
