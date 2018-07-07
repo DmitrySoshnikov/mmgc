@@ -4,13 +4,14 @@
  */
 
 #include "MarkSweepGC.h"
+#include "../../MemoryManager/ObjectHeader.h"
 
 #include <iostream>
 
 /**
  * Main collection cycle.
  */
-std::shared_ptr<MarkSweepStats> MarkSweepGC::collect() {
+std::shared_ptr<GCStats> MarkSweepGC::collect() {
   _resetStats();
   mark();
   sweep();
@@ -21,12 +22,11 @@ std::shared_ptr<MarkSweepStats> MarkSweepGC::collect() {
  * Mark phase. Returns number of live objects.
  */
 void MarkSweepGC::mark() {
-  _worklist.clear();
-  auto todo = getRoots();
+  auto worklist = getRoots();
 
-  while (!todo.empty()) {
-    auto v = todo.back();
-    todo.pop_back();
+  while (!worklist.empty()) {
+    auto v = worklist.back();
+    worklist.pop_back();
     auto header = allocator->getHeader(v);
 
     // Mark the object if it's not marked yet, and move to the child pointers.
@@ -34,7 +34,7 @@ void MarkSweepGC::mark() {
       header->mark = 1;
       stats->alive++;
       for (const auto& p : allocator->getPointers(v)) {
-        todo.push_back(p->decode());
+        worklist.push_back(p->decode());
       }
     }
   }
@@ -62,23 +62,4 @@ void MarkSweepGC::sweep() {
     // Move to the next block.
     scan += header->size + sizeof(ObjectHeader);
   }
-}
-
-/**
- * Returns the GC roots.
- */
-std::vector<uint32_t> MarkSweepGC::getRoots() {
-  std::vector<uint32_t> roots;
-  // TODO: impelement actual roots, use first block for now.
-  roots.push_back(0 + sizeof(ObjectHeader));
-  return roots;
-}
-
-/**
- * Resets the stats before the collection cycle.
- */
-void MarkSweepGC::_resetStats() {
-  stats->total = allocator->getObjectCount();
-  stats->alive = 0;
-  stats->reclaimed = 0;
 }

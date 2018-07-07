@@ -5,38 +5,13 @@
 
 #pragma once
 
-#include <stdint.h>
-#include <iostream>
 #include <list>
 #include <memory>
-#include <string>
-#include <vector>
+
+#include "../ICollector.h"
 
 #include "../../Value/Value.h"
 #include "../../allocators/IAllocator.h"
-#include "../../MemoryManager/ObjectHeader.h"
-
-#include "../../util/number-util.h"
-
-/**
- * Stats for the collection cycle.
- */
-struct MarkSweepStats {
-  /**
-   * The snapshot of the total objects on the heap before collection.
-   */
-  uint32_t total;
-
-  /**
-   * Number of alive (reachable) objects.
-   */
-  uint32_t alive;
-
-  /**
-   * Number of reclaimed objects.
-   */
-  uint32_t reclaimed;
-};
 
 /**
  * Mark-Sweep garbage collector.
@@ -47,27 +22,15 @@ struct MarkSweepStats {
  * Collects stats during collection.
  *
  */
-class MarkSweepGC {
+class MarkSweepGC : public ICollector {
  public:
-  /**
-   * Associated allocator.
-   */
-  std::shared_ptr<IAllocator> allocator;
-
-  /**
-   * Stats for the collection cycle.
-   */
-  std::shared_ptr<MarkSweepStats> stats;
-
   MarkSweepGC(const std::shared_ptr<IAllocator>& allocator)
-      : allocator(allocator),
-        stats(std::make_shared<MarkSweepStats>()),
-        _worklist(){};
+      : ICollector(allocator){};
 
   /**
    * Main collection cycle.
    */
-  std::shared_ptr<MarkSweepStats> collect();
+  std::shared_ptr<GCStats> collect();
 
   /**
    * Mark phase. Returns number of live objects.
@@ -79,20 +42,4 @@ class MarkSweepGC {
    * adding back to the free list.
    */
   void sweep();
-
-  /**
-   * Returns root objects (where GC starts analysis from).
-   */
-  std::vector<Word> getRoots();
-
- private:
-  /**
-   * Worklist for marking phase.
-   */
-  std::list<uint32_t> _worklist;
-
-  /**
-   * Resets the stats before the collection cycle.
-   */
-  void _resetStats();
 };
