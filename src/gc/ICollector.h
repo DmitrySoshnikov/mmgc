@@ -74,6 +74,13 @@ class ICollector {
     return roots;
   }
 
+  /**
+   * Initializes the collector for the cycle.
+   */
+  void init() {
+    _resetStats();
+  }
+
  protected:
   /**
    * Resets the GC stats.
