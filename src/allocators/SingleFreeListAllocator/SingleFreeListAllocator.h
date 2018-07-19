@@ -86,4 +86,5 @@ class SingleFreeListAllocator : public IAllocator {
 
  private:
   void _resetFreeList();
+  void _resetFirstBlock();
 };

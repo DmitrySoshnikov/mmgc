@@ -11,7 +11,6 @@
 void MemoryManager::reset() {
   heap->reset();
   allocator->reset();
-  _initFirstBlock();
 }
 
 /**
@@ -162,14 +161,3 @@ uint32_t MemoryManager::getObjectCount() { return allocator->getObjectCount(); }
  * Prints memory dump.
  */
 void MemoryManager::dump() { heap->dump(); }
-
-/**
- * Initially the object header stored at the beginning
- * of the heap defines the whole heap as a "free block".
- */
-void MemoryManager::_initFirstBlock() {
-  writeWord(0, ObjectHeader{
-                   .size = (uint16_t)(heap->size() - sizeof(ObjectHeader)),
-                   .used = false,
-               });
-}

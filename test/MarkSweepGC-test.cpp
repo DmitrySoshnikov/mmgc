@@ -19,9 +19,7 @@ static MarkSweepGC msgc(allocator);
 
 void reset() {
   heap->reset();
-  *heap->asWordPointer(0) = ObjectHeader{.size = 28};
-
-  allocator.reset();
+  allocator->reset();
 }
 
 

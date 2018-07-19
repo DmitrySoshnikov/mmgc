@@ -16,14 +16,14 @@
  */
 struct ObjectHeader {
   /**
-   * The block size.
+   * The forwarding address (using by moving/copying collectors).
    */
-  uint16_t size;
+  uint16_t forward;
 
   /**
-   * Whether the block is used.
+   * The block size.
    */
-  bool used;
+  uint8_t size;
 
   /**
    * Specific GC data.

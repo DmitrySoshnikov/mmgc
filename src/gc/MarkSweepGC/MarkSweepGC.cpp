@@ -30,7 +30,7 @@ void MarkSweepGC::mark() {
     auto header = allocator->getHeader(v);
 
     // Mark the object if it's not marked yet, and move to the child pointers.
-    if (header->used && header->mark == 0) {
+    if (header->mark == 0) {
       header->mark = 1;
       stats->alive++;
       for (const auto& p : allocator->getPointers(v)) {
@@ -53,7 +53,7 @@ void MarkSweepGC::sweep() {
     // Alive object, reset the mark bit for future collection cycles.
     if (header->mark == 1) {
       header->mark = 0;
-    } else if (header->used) {
+    } else {
       // Garbage, reclaim.
       allocator->free(scan);
       stats->reclaimed++;

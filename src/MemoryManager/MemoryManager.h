@@ -209,17 +209,6 @@ class MemoryManager {
 
  private:
   /**
-   * Initializes the heap to zeros.
-   */
-  void _resetHeap();
-
-  /**
-   * Initially the object header stored at the beginning
-   * of the heap defines the whole heap as a "free block".
-   */
-  void _initFirstBlock();
-
-  /**
    * Write barrier.
    *
    * Several GC algorithms use write barrier to do extra operation

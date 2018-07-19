@@ -29,8 +29,6 @@ Value SingleFreeListAllocator::allocate(uint32_t n) {
     }
 
     // Found block of a needed size:
-
-    header->used = true;
     freeList.remove(free);
 
     auto rawPayload = ((Word*)header) + 1;
@@ -46,7 +44,7 @@ Value SingleFreeListAllocator::allocate(uint32_t n) {
 
       // Split the new block.
       auto nextHeaderP = payload + n;
-      auto nextSize = (uint16_t)(size - n - sizeof(ObjectHeader));
+      auto nextSize = (uint8_t)(size - n - sizeof(ObjectHeader));
       *heap->asWordPointer(nextHeaderP) = ObjectHeader{.size = nextSize};
       freeList.push_back(nextHeaderP);
     }
@@ -66,13 +64,10 @@ Value SingleFreeListAllocator::allocate(uint32_t n) {
 void SingleFreeListAllocator::free(Word address) {
   auto header = getHeader(address);
 
-  // Avoid "double-free".
-  if (!header->used) {
-    return;
-  }
-
-  header->used = 0;
   freeList.push_back((uint8_t*)header - heap->asBytePointer(0));
+
+  // Reset the block to 0.
+  memset(heap->asBytePointer(address), header->size, 0x0);
 
   // Update total object count.
   _objectCount--;
@@ -97,7 +92,7 @@ std::vector<Value*> SingleFreeListAllocator::getPointers(Word address) {
   while (words-- > 0) {
     auto v = (Value*)heap->asWordPointer(address);
     address += sizeof(Word);
-    if (!v->isPointer()) {
+    if (!v->isPointer() || v->isNullPointer()) {
       continue;
     }
     pointers.push_back(v);
@@ -115,6 +110,7 @@ uint32_t SingleFreeListAllocator::getObjectCount() { return _objectCount; }
  * Resets the allocator.
  */
 void SingleFreeListAllocator::reset() {
+  _resetFirstBlock();
   _resetFreeList();
   _objectCount = 0;
 }
@@ -122,4 +118,14 @@ void SingleFreeListAllocator::reset() {
 void SingleFreeListAllocator::_resetFreeList() {
   freeList.clear();
   freeList.push_back(0);
+}
+
+/**
+ * Initially the object header stored at the beginning
+ * of the heap defines the whole heap as a "free block".
+ */
+void SingleFreeListAllocator::_resetFirstBlock() {
+  *heap->asWordPointer(0) = ObjectHeader{
+      .size = (uint8_t)(heap->size() - sizeof(ObjectHeader)),
+  };
 }

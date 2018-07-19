@@ -11,49 +11,40 @@ namespace {
 TEST(Header, MarkSweep) {
   ObjectHeader header = {
       .size = 0xA,
-      .used = true,
       .mark = true,
   };
 
   EXPECT_EQ(header.size, 0xA);
-  EXPECT_EQ(header.used, true);
   EXPECT_EQ(header.mark, true);
 
-  EXPECT_EQ(header.toInt(), 0x0101000A);
+  EXPECT_EQ(header.toInt(), 0x010A0000);
   EXPECT_EQ((uint32_t)header, header.toInt());
 
-  header.used = false;
-  EXPECT_EQ(header.toInt(), 0x0100000A);
-
   header.mark = false;
-  EXPECT_EQ(header.toInt(), 0x0000000A);
+  EXPECT_EQ(header.toInt(), 0x000A0000);
 
   header.size = 0xFF;
-  EXPECT_EQ(header.toInt(), 0x000000FF);
+  EXPECT_EQ(header.toInt(), 0x00FF0000);
 }
 
 TEST(Header, ReferenceCounting) {
   ObjectHeader header = {
       .size = 0xA,
-      .used = true,
       .rc = 10,
   };
 
   EXPECT_EQ(header.size, 0xA);
-  EXPECT_EQ(header.used, true);
   EXPECT_EQ(header.rc, 10);
 
-  EXPECT_EQ(header.toInt(), 0x0A01000A);
+  EXPECT_EQ(header.toInt(), 0x0A0A0000);
   EXPECT_EQ((uint32_t)header, header.toInt());
 
-  header.used = false;
-  EXPECT_EQ(header.toInt(), 0x0A00000A);
 
   header.rc++;
-  EXPECT_EQ(header.toInt(), 0x0B00000A);
+  EXPECT_EQ(header.toInt(), 0x0B0A0000);
 
   header.size = 0xFF;
-  EXPECT_EQ(header.toInt(), 0x0B0000FF);
+  EXPECT_EQ(header.toInt(), 0x0BFF0000);
 }
 
 }  // namespace

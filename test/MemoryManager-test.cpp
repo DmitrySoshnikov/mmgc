@@ -24,16 +24,16 @@ TEST(MemoryManager, reset) {
   mm->reset();
 
   // Firt object header.
-  EXPECT_EQ(mm->readWord(0), 0x0000001C);
+  EXPECT_EQ(mm->readWord(0), 0x001C0000);
 
   // All other heap elements are reset.
-  for (size_t i = 1; i < 8; i++) {
-    EXPECT_EQ((*mm->heap)[i], 0x0);
+  for (size_t i = 4; i < 32; i += 4) {
+    EXPECT_EQ(mm->readWord(i), 0x0);
   }
 }
 
 TEST(MemoryManager, readWord) {
-  (*mm->heap)[0] = 255;
+  mm->writeWord(0, 255);
   EXPECT_EQ(mm->readWord(0), 255);
 }
 
@@ -107,7 +107,6 @@ TEST(MemoryManager, allocate) {
 
   // 3 is aligned to 4:
   EXPECT_EQ(mm->getHeader(p1)->size, 4);
-  EXPECT_EQ(mm->getHeader(p1)->used, 1);
 
   mm->writeWord(p1, 100);
   EXPECT_EQ(mm->readWord(p1), 100);
@@ -118,7 +117,6 @@ TEST(MemoryManager, allocate) {
 
   // 5 is aligned to 8:
   EXPECT_EQ(mm->getHeader(p2)->size, 8);
-  EXPECT_EQ(mm->getHeader(p2)->used, 1);
 }
 
 TEST(MemoryManager, sizeOf) {

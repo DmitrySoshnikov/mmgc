@@ -19,8 +19,6 @@ static SingleFreeListAllocator allocator(heap);
 
 void reset() {
   heap->reset();
-  *heap->asWordPointer(0) = ObjectHeader{.size = 28};
-
   allocator.reset();
 }
 
@@ -34,7 +32,6 @@ TEST(SingleFreeListAllocator, allocate) {
 
   // 3 is aligned to 4:
   EXPECT_EQ(allocator.getHeader(p1)->size, 4);
-  EXPECT_EQ(allocator.getHeader(p1)->used, 1);
 
   *heap->asWordPointer(p1) = 100;
   EXPECT_EQ(*heap->asWordPointer(p1), 100);
@@ -45,7 +42,6 @@ TEST(SingleFreeListAllocator, allocate) {
 
   // 5 is aligned to 8:
   EXPECT_EQ(allocator.getHeader(p2)->size, 8);
-  EXPECT_EQ(allocator.getHeader(p2)->used, 1);
 }
 
 TEST(SingleFreeListAllocator, free) {
@@ -80,13 +76,11 @@ TEST(SingleFreeListAllocator, blockSize) {
 
   allocator.free(p1);
   EXPECT_EQ(allocator.getHeader(p1)->size, 16);
-  EXPECT_EQ(allocator.getHeader(p1)->used, false);
 
   p1 = allocator.allocate(12);
   EXPECT_EQ(p1, 4);
   // Couldn't split, the block is still 16.
   EXPECT_EQ(allocator.getHeader(p1)->size, 16);
-  EXPECT_EQ(allocator.getHeader(p1)->used, true);
   EXPECT_EQ(p1, 4);
 
   allocator.free(p1);
@@ -94,7 +88,6 @@ TEST(SingleFreeListAllocator, blockSize) {
   EXPECT_EQ(p1, 4);
   // Can split:
   EXPECT_EQ(allocator.getHeader(p1)->size, 8);
-  EXPECT_EQ(allocator.getHeader(p1)->used, true);
 
   p2 = allocator.allocate(4);
   EXPECT_EQ(allocator.getHeader(p2)->size, 4);
@@ -144,7 +137,6 @@ TEST(SingleFreeListAllocator, getHeader) {
   auto p = allocator.allocate(4);
   auto header = allocator.getHeader(p);
   EXPECT_EQ(header->size, 4);
-  EXPECT_EQ(header->used, true);
 }
 
 }  // namespace
