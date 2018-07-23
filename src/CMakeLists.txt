@@ -11,6 +11,7 @@ target_link_libraries(mmgc
     MemoryManager
     SingleFreeListAllocator
     MarkSweepGC
+    MarkCompactGC
 )
 
 install(TARGETS mmgc DESTINATION bin)

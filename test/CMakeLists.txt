@@ -47,6 +47,7 @@ target_link_libraries(testall
     SingleFreeListAllocator
     MemoryManager
     MarkSweepGC
+    MarkCompactGC
     libgtest
     libgmock
 )
