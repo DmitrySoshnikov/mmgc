@@ -21,7 +21,7 @@ add_dependencies(libgtest gtest)
 
 # Set libgtest properties
 set_target_properties(libgtest PROPERTIES
-    "IMPORTED_LOCATION" "${binary_dir}/googlemock/gtest/libgtest.a"
+    "IMPORTED_LOCATION" "${binary_dir}/lib/libgtest.a"
     "IMPORTED_LINK_INTERFACE_LIBRARIES" "${CMAKE_THREAD_LIBS_INIT}"
 )
 
@@ -31,14 +31,14 @@ add_dependencies(libgmock gtest)
 
 # Set libgmock properties
 set_target_properties(libgmock PROPERTIES
-    "IMPORTED_LOCATION" "${binary_dir}/googlemock/libgmock.a"
+    "IMPORTED_LOCATION" "${binary_dir}/lib/libgmock.a"
     "IMPORTED_LINK_INTERFACE_LIBRARIES" "${CMAKE_THREAD_LIBS_INIT}"
 )
 
 include_directories("${source_dir}/googletest/include"
                     "${source_dir}/googlemock/include")
 
-file(GLOB TEST_SRC_FILES "*.h" "*.hpp" *.cpp)
+file(GLOB TEST_SRC_FILES "*.h" "*.hpp" "*.cpp")
 
 add_executable(testall ${TEST_SRC_FILES})
 
